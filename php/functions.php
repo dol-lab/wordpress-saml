@@ -448,10 +448,10 @@ function saml_acs() {
 		if ($user_id && !is_a($user_id, 'WP_Error')) {
 			if (is_multisite()) {
 				if (get_site_option('onelogin_network_saml_global_jit')) {
-					enroll_user_on_sites($user_id, $userdata['roles']);
+					enroll_user_on_sites($user_id, $roles);
 				} else {
 					$blog_id = get_current_blog_id();
-					enroll_user_on_blogs($blog_id, $user_id, $userdata['roles']);
+					enroll_user_on_blogs($blog_id, $user_id, $roles);
 				}
 			} else if (!empty($roles)) {
 				add_roles_to_user($user_id, $roles);
