@@ -202,6 +202,10 @@ function saml_slo() {
 				wp_redirect(home_url());
 				exit();
 			}
+            // fixes user not being logged out of wordpress after saml logout
+            wp_destroy_current_session();
+            wp_clear_auth_cookie();
+			
 			$auth->logout(home_url(), array(), $nameId, $sessionIndex, false, $nameIdFormat, $nameIdNameQualifier, $nameIdSPNameQualifier);
 			return false;
 		}
