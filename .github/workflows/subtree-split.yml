@@ -1,0 +1,34 @@
+name: Split plugin subtree
+
+# Regenerate the `plugin-subtree-split` branch (only the onelogin-saml-sso/
+# plugin, re-rooted) whenever `doll` changes. This branch is what composer
+# consumers pull, so it must never be hand-edited — it is fully derived.
+on:
+  push:
+    branches:
+      - doll
+  workflow_dispatch: {}
+
+# GITHUB_TOKEN needs write to push the generated branch.
+permissions:
+  contents: write
+
+# Never let two splits push at once.
+concurrency:
+  group: subtree-split
+  cancel-in-progress: false
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout doll with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Split onelogin-saml-sso/ and force-push plugin-subtree-split
+        run: |
+          set -euo pipefail
+          git subtree split --prefix=onelogin-saml-sso -b plugin-subtree-split
+          git push --force origin plugin-subtree-split
