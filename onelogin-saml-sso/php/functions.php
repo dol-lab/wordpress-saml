@@ -393,6 +393,13 @@ function saml_acs() {
 		}
 	}
 
+	// Fires after the SAML attributes are resolved but BEFORE the user is matched,
+	// created (wp_insert_user) or logged in (wp_set_auth_cookie). Lets plugins gate
+	// access (e.g. by affiliation) with zero account side-effects. A handler that
+	// denies access is responsible for ending the request itself (clear cookies /
+	// SLO / render a page / exit).
+	do_action( 'onelogin_saml_pre_login', $attrs, $userdata );
+
 	$matcher = get_option('onelogin_saml_account_matcher');
 	$newuser = false;
 
@@ -460,10 +467,10 @@ function saml_acs() {
 		if ($user_id && !is_a($user_id, 'WP_Error')) {
 			if (is_multisite()) {
 				if (get_site_option('onelogin_network_saml_global_jit')) {
-					enroll_user_on_sites($user_id, $userdata['roles']);
+					enroll_user_on_sites($user_id, $roles);
 				} else {
 					$blog_id = get_current_blog_id();
-					enroll_user_on_blogs($blog_id, $user_id, $userdata['roles']);
+					enroll_user_on_blogs($blog_id, $user_id, $roles);
 				}
 			} else if (!empty($roles)) {
 				add_roles_to_user($user_id, $roles);
