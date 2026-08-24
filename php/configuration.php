@@ -18,6 +18,16 @@ function sanitize_array_int($integers) {
 	return $sanitized_array;
 }
 
+function onelogin_saml_check_network_save($nonce_action) {
+	if (!is_super_admin() || !current_user_can('manage_network_options')) {
+		wp_die(__("Access Forbidden!", 'onelogin-saml-sso'), 403);
+	}
+	if (empty($_SERVER['REQUEST_METHOD']) || strtoupper($_SERVER['REQUEST_METHOD']) !== 'POST') {
+		wp_die(__("Access Forbidden!", 'onelogin-saml-sso'), 405);
+	}
+	check_admin_referer($nonce_action);
+}
+
 function onelogin_saml_configuration_render() {
 	$title = __("SSO/SAML Settings", 'onelogin-saml-sso');
 	?>
@@ -579,7 +589,7 @@ function load_saml_network_enabler() {
 }
 
 function onelogin_saml_global_configuration_multisite_save() {
-	check_admin_referer('network_saml_global_settings_validate'); // Nonce security check
+	onelogin_saml_check_network_save('network_saml_global_settings_validate');
 	
 	if (isset($_POST)) {
 		if (isset($_POST['global_jit']) && $_POST['global_jit'] === 'on') {
@@ -599,7 +609,7 @@ function onelogin_saml_global_configuration_multisite_save() {
 }
 
 function onelogin_saml_configuration_multisite_save() {
-	check_admin_referer('network_saml_settings_validate'); // Nonce security check
+	onelogin_saml_check_network_save('network_saml_settings_validate');
 
 	$fields = get_onelogin_saml_settings();
 
@@ -618,11 +628,16 @@ function onelogin_saml_configuration_multisite_save() {
 }
 
 function onelogin_saml_configuration_multisite_injection() {
+	onelogin_saml_check_network_save('network_saml_injection_validate');
+
 	$updated = false;
-	if (!empty($_POST) && isset($_POST['inject_saml_in_site'])) {
+	if (!empty($_POST['inject_saml_in_site']) && is_array($_POST['inject_saml_in_site'])) {
 		$fields = get_onelogin_saml_settings();
 		$sites = sanitize_array_int($_POST['inject_saml_in_site']);
 		foreach ($sites as $site_id) {
+			if ($site_id <= 0 || !get_site($site_id)) {
+				continue;
+			}
 			foreach (array_keys($fields) as $section) {
 				foreach (array_keys($fields[$section]) as $name) {
 					$name = sanitize_key($name);
@@ -642,10 +657,12 @@ function onelogin_saml_configuration_multisite_injection() {
 }
 
 function onelogin_saml_configuration_multisite_enabler() {
+	onelogin_saml_check_network_save('network_saml_enabler_validate');
+
 	$updated = false;
 	if (!empty($_POST)) {
 		$enable_on_sites = array();
-		if (isset($_POST['enable_saml_in_site'])) {
+		if (!empty($_POST['enable_saml_in_site']) && is_array($_POST['enable_saml_in_site'])) {
 			$enable_on_sites = sanitize_array_int($_POST['enable_saml_in_site']);
 		}
 

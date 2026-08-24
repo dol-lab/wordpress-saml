@@ -5,7 +5,7 @@ if (!function_exists('add_action')) {
     exit;
 }
 
-if (!current_user_can('manage_options')) {
+if (!is_super_admin() || !current_user_can('manage_network_options')) {
      header("HTTP/1.0 403 Forbidden");
      echo '<h1>'.__("Access Forbidden!", 'onelogin-saml-sso').'</h1>';
      exit();
@@ -16,6 +16,8 @@ if (!current_user_can('manage_options')) {
 
 <form method="post" action="edit.php?action=network_saml_enabler">
 <?php
+
+wp_nonce_field('network_saml_enabler_validate');
 
 $opts = array('number' => 1000);
 $sites = get_sites($opts);
