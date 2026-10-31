@@ -147,9 +147,6 @@ function saml_sso() {
 	}
 
 	if (is_user_logged_in()) {
-		// Same gate as the ACS path: `target` / `redirect_to` come straight from the query string,
-		// so an unauthenticated attacker could hand any logged-in visitor an off-site redirect
-		// through the login endpoint. Only the configured trusted domains leave the site.
 		$target = $_GET["target"] ?? $_GET['redirect_to'] ?? '';
 		if (!empty($target)) {
 			redirect_to_relaystate_if_trusted($target);
