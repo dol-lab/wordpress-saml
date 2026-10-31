@@ -147,12 +147,12 @@ function saml_sso() {
 	}
 
 	if (is_user_logged_in()) {
-		if (isset($_GET["target"])) {
-			wp_redirect($_GET["target"]);
-			exit();
-		} else if (isset($_GET['redirect_to'])) {
-			wp_redirect($_GET['redirect_to']);
-			exit();
+		// Same gate as the ACS path: `target` / `redirect_to` come straight from the query string,
+		// so an unauthenticated attacker could hand any logged-in visitor an off-site redirect
+		// through the login endpoint. Only the configured trusted domains leave the site.
+		$target = $_GET["target"] ?? $_GET['redirect_to'] ?? '';
+		if (!empty($target)) {
+			redirect_to_relaystate_if_trusted($target);
 		}
 		return true;
 	}
